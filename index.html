@@ -26,6 +26,11 @@ const ctx = canvas.getContext("2d");
 
 let width, height;
 let roses = [];
+let time = 0;
+
+
+const vampire = new Image();
+vampire.src = "vampire.jpg";
 
 function resize() {
   width = canvas.width = window.innerWidth;
@@ -49,7 +54,7 @@ function createRose() {
     rotation: random(-0.8, 0.8) + (side < 0.5 ? 0 : Math.PI),
     alpha: 0,
     life: 0,
-    speed: random(0.0015, 0.004),
+    speed: random(0.0008, 0.002),
     drift: random(-0.08, 0.08)
   });
 
@@ -65,9 +70,32 @@ function drawPetal(x, y, w, h, rot) {
 
   ctx.beginPath();
   ctx.moveTo(0, 0);
-  ctx.bezierCurveTo(-w, -h * 0.4, -w * 0.7, -h, 0, -h);
-  ctx.bezierCurveTo(w * 0.7, -h, w, -h * 0.4, 0, 0);
+
+  ctx.bezierCurveTo(
+    -w * 0.9, -h * 0.15,
+    -w * 0.65, -h * 0.9,
+    0, -h
+  );
+
+  ctx.bezierCurveTo(
+    w * 0.65, -h * 0.9,
+    w * 0.9, -h * 0.15,
+    0, 0
+  );
+
   ctx.fill();
+
+  ctx.beginPath();
+  ctx.moveTo(0, -h * 0.12);
+  ctx.bezierCurveTo(
+    w * 0.12, -h * 0.45,
+    w * 0.08, -h * 0.72,
+    0, -h * 0.95
+  );
+
+  ctx.strokeStyle = "rgba(90, 31, 40, 0.35)";
+  ctx.lineWidth = 1.2;
+  ctx.stroke();
 
   ctx.restore();
 }
@@ -151,18 +179,18 @@ function drawRose(rose) {
 
   drawStem(0, 25, 80, 0.2);
 
-  for (let i = 0; i < 18; i++) {
-    const angle = i * 0.7;
-    const radius = 8 + i * 1.3;
+  for (let i = 0; i < 22; i++) {
+  const angle = i * 0.58;
+  const radius = 5 + i * 1.15;
 
-    drawPetal(
-      Math.cos(angle) * radius,
-      Math.sin(angle) * radius,
-      28 - i * 0.6,
-      45 - i * 0.7,
-      angle + Math.PI / 2
-    );
-  }
+  drawPetal(
+    Math.cos(angle) * radius,
+    Math.sin(angle) * radius,
+    34 - i * 0.75,
+    55 - i * 1.15,
+    angle + Math.PI / 2
+  );
+}
 
   ctx.beginPath();
   ctx.arc(0, 0, 10, 0, Math.PI * 2);
@@ -204,6 +232,50 @@ function drawBackgroundVines() {
 
       drawLeaf(lx, ly, 18, Math.sin(i + j));
     }
+  }
+
+  ctx.restore();
+}
+
+
+function drawVampireBackground(time) {
+  if (!vampire.complete) return;
+
+  ctx.save();
+
+  const pulse = 1 + Math.sin(time * 1.6) * 0.008;
+
+  const imgWidth = width * 0.82 * pulse;
+  const imgHeight = imgWidth * (vampire.height / vampire.width);
+
+  const x = width / 2 - imgWidth / 2;
+  const y = height / 2 - imgHeight / 2;
+
+  ctx.globalAlpha = 0.18;
+
+  ctx.drawImage(
+    vampire,
+    x,
+    y,
+    imgWidth,
+    imgHeight
+  );
+
+  // Foto üstüne koyu bordo filtre
+  ctx.globalAlpha = 0.22;
+  ctx.fillStyle = "#5a1f28";
+  ctx.fillRect(0, 0, width, height);
+
+  // Hafif CRT scanline
+  ctx.globalAlpha = 0.16;
+  ctx.strokeStyle = "#000000";
+  ctx.lineWidth = 1;
+
+  for (let i = 0; i < height; i += 4) {
+    ctx.beginPath();
+    ctx.moveTo(0, i);
+    ctx.lineTo(width, i);
+    ctx.stroke();
   }
 
   ctx.restore();
@@ -317,18 +389,20 @@ function drawCornerOrnament(x, y, sx, sy) {
 
 
 function animate() {
+  time += 0.01;
   drawWallpaperBackground();
+  drawVampireBackground(time);
 
   drawBackgroundVines();
 
   for (let rose of roses) {
     rose.life += rose.speed;
 
-    if (rose.life < 0.5) {
-      rose.alpha = rose.life * 2;
-    } else {
-      rose.alpha = 1 - (rose.life - 0.5) * 1.4;
-    }
+    const fadeIn = Math.min(rose.life / 0.35, 1);
+const fadeOut = Math.min((1 - rose.life) / 0.45, 1);
+
+rose.alpha = Math.max(0, Math.min(fadeIn, fadeOut));
+rose.alpha = rose.alpha * rose.alpha * (3 - 2 * rose.alpha);
 
     rose.rotation += 0.0004;
     rose.x += rose.drift;
