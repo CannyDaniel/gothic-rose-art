@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Animated Gothic Roses</title>
+
+<style>
+  body {
+    margin: 0;
+    overflow: hidden;
+    background: #5a1f28;
+  }
+
+  canvas {
+    display: block;
+  }
+</style>
+</head>
+
+<body>
+<canvas id="canvas"></canvas>
+
+<script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+let width, height;
+let roses = [];
+
+function resize() {
+  width = canvas.width = window.innerWidth;
+  height = canvas.height = window.innerHeight;
+}
+
+window.addEventListener("resize", resize);
+resize();
+
+function random(min, max) {
+  return Math.random() * (max - min) + min;
+}
+
+function createRose() {
+  const side = Math.random();
+
+  roses.push({
+    x: random(-80, width + 80),
+    y: random(-80, height + 80),
+    size: random(80, 190),
+    rotation: random(-0.8, 0.8) + (side < 0.5 ? 0 : Math.PI),
+    alpha: 0,
+    life: 0,
+    speed: random(0.0015, 0.004),
+    drift: random(-0.08, 0.08)
+  });
+
+  if (roses.length > 12) {
+    roses.shift();
+  }
+}
+
+function drawPetal(x, y, w, h, rot) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(rot);
+
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.bezierCurveTo(-w, -h * 0.4, -w * 0.7, -h, 0, -h);
+  ctx.bezierCurveTo(w * 0.7, -h, w, -h * 0.4, 0, 0);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function drawLeaf(x, y, size, rot) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(rot);
+
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.bezierCurveTo(size, -size * 0.5, size * 1.6, -size * 0.2, size * 2, 0);
+  ctx.bezierCurveTo(size * 1.3, size * 0.5, size * 0.5, size * 0.6, 0, 0);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+
+function drawThorn(x, y, size, rot) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(rot);
+
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(size, -size * 0.5);
+  ctx.lineTo(size * 0.25, size * 0.2);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.restore();
+}
+
+
+
+
+
+
+function drawStem(x, y, size, rot) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(rot);
+
+  ctx.strokeStyle = "#050406";
+  ctx.lineWidth = size * 0.045;
+  ctx.lineCap = "round";
+
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.bezierCurveTo(
+    -size * 0.25, size * 0.8,
+    size * 0.25, size * 1.7,
+    -size * 0.1, size * 2.8
+  );
+  ctx.stroke();
+
+  ctx.fillStyle = "#050406";
+
+  drawLeaf(-size * 0.2, size * 0.75, size * 0.24, -1.9);
+  drawLeaf(size * 0.08, size * 1.35, size * 0.22, 0.35);
+  drawLeaf(-size * 0.18, size * 2.0, size * 0.2, -1.7);
+
+  drawThorn(size * 0.05, size * 0.55, size * 0.16, -0.2);
+  drawThorn(-size * 0.1, size * 1.05, size * 0.15, 2.8);
+  drawThorn(size * 0.06, size * 1.7, size * 0.14, -0.1);
+
+  ctx.restore();
+}
+
+function drawRose(rose) {
+  ctx.save();
+
+  ctx.translate(rose.x, rose.y);
+  ctx.rotate(rose.rotation);
+  ctx.scale(rose.size / 100, rose.size / 100);
+
+  ctx.globalAlpha = rose.alpha;
+  ctx.fillStyle = "#020202";
+  ctx.strokeStyle = "#08080a";
+
+  drawStem(0, 25, 80, 0.2);
+
+  for (let i = 0; i < 18; i++) {
+    const angle = i * 0.7;
+    const radius = 8 + i * 1.3;
+
+    drawPetal(
+      Math.cos(angle) * radius,
+      Math.sin(angle) * radius,
+      28 - i * 0.6,
+      45 - i * 0.7,
+      angle + Math.PI / 2
+    );
+  }
+
+  ctx.beginPath();
+  ctx.arc(0, 0, 10, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+
+
+
+function drawBackgroundVines() {
+  ctx.save();
+
+  ctx.strokeStyle = "#050406";
+  ctx.fillStyle = "#050406";
+  ctx.globalAlpha = 0.9;
+  ctx.lineWidth = 3;
+  ctx.lineCap = "round";
+
+  for (let i = 0; i < 8; i++) {
+    const x = (width / 8) * i + 40;
+
+    ctx.beginPath();
+    ctx.moveTo(x, -80);
+    ctx.bezierCurveTo(
+      x + Math.sin(i) * 90,
+      height * 0.25,
+      x - Math.cos(i) * 120,
+      height * 0.75,
+      x + 30,
+      height + 80
+    );
+    ctx.stroke();
+
+    for (let j = 0; j < 5; j++) {
+      const ly = j * height * 0.2 + 80;
+      const lx = x + Math.sin(j + i) * 45;
+
+      drawLeaf(lx, ly, 18, Math.sin(i + j));
+    }
+  }
+
+  ctx.restore();
+}
+
+
+
+
+
+function drawWallpaperBackground() {
+  const gradient = ctx.createLinearGradient(0, 0, width, height);
+  gradient.addColorStop(0, "#25070d");
+  gradient.addColorStop(0.5, "#5a1f28");
+  gradient.addColorStop(1, "#120306");
+
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, width, height);
+
+  const vignette = ctx.createRadialGradient(
+    width / 2, height / 2, width * 0.1,
+    width / 2, height / 2, width * 0.75
+  );
+
+  vignette.addColorStop(0, "rgba(0,0,0,0)");
+  vignette.addColorStop(1, "rgba(0,0,0,0.35)");
+
+  ctx.fillStyle = vignette;
+  ctx.fillRect(0, 0, width, height);
+}
+
+
+
+function drawGlitch() {
+  if (Math.random() < 0.025) {
+    const y = random(0, height);
+    const h = random(4, 18);
+    const offset = random(-18, 18);
+
+    ctx.drawImage(
+      canvas,
+      0, y, width, h,
+      offset, y, width, h
+    );
+  }
+}
+
+function drawFrame() {
+  ctx.save();
+
+  ctx.strokeStyle = "#090608";
+  ctx.fillStyle = "#090608";
+  ctx.globalAlpha = 0.95;
+
+  const pad = 28;
+
+  ctx.lineWidth = 6;
+  ctx.strokeRect(pad, pad, width - pad * 2, height - pad * 2);
+
+  ctx.lineWidth = 2;
+  ctx.strokeRect(pad + 14, pad + 14, width - (pad + 14) * 2, height - (pad + 14) * 2);
+
+  ctx.lineWidth = 1;
+  ctx.strokeRect(pad + 24, pad + 24, width - (pad + 24) * 2, height - (pad + 24) * 2);
+
+  // köşe süsleri
+  drawCornerOrnament(pad, pad, 1, 1);
+  drawCornerOrnament(width - pad, pad, -1, 1);
+  drawCornerOrnament(pad, height - pad, 1, -1);
+  drawCornerOrnament(width - pad, height - pad, -1, -1);
+
+  ctx.restore();
+}
+
+function drawCornerOrnament(x, y, sx, sy) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(sx, sy);
+
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.bezierCurveTo(35, 5, 55, 20, 65, 45);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.bezierCurveTo(5, 35, 20, 55, 45, 65);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(38, 38, 10, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(18, 8);
+  ctx.lineTo(28, 18);
+  ctx.lineTo(16, 22);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.moveTo(8, 18);
+  ctx.lineTo(18, 28);
+  ctx.lineTo(22, 16);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.restore();
+}
+
+
+
+
+function animate() {
+  drawWallpaperBackground();
+
+  drawBackgroundVines();
+
+  for (let rose of roses) {
+    rose.life += rose.speed;
+
+    if (rose.life < 0.5) {
+      rose.alpha = rose.life * 2;
+    } else {
+      rose.alpha = 1 - (rose.life - 0.5) * 1.4;
+    }
+
+    rose.rotation += 0.0004;
+    rose.x += rose.drift;
+    rose.y += Math.sin(rose.life * 18) * 0.08;
+
+    drawRose(rose);
+  }
+
+  roses = roses.filter(r => r.alpha > 0);
+
+  if (Math.random() < 0.04) {
+    createRose();
+  }
+
+  drawGlitch();
+drawFrame();
+
+  requestAnimationFrame(animate);
+}
+
+for (let i = 0; i < 8; i++) {
+  createRose();
+}
+
+animate();
+</script>
+</body>
+</html>
